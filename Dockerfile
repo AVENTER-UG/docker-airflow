@@ -13,8 +13,7 @@ ENV TERM linux
 ENV GIT_REPO https://github.com/AVENTER-UG/airflow.git
 
 # Airflow
-ARG AIRFLOW_VERSION=add-mesos-executor
-ARG AIRFLOW_HOME=/usr/local/airflow
+ARG AIRFLOW_HOME=/home/airflow
 
 # Define en_US.
 ENV LANGUAGE en_US.UTF-8
@@ -22,6 +21,8 @@ ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 ENV LC_CTYPE en_US.UTF-8
 ENV LC_MESSAGES en_US.UTF-8
+
+COPY airflow /tmp/airflow
 
 RUN set -ex \
     && buildDeps=' \
@@ -58,7 +59,16 @@ RUN set -ex \
     && locale-gen \
     && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
     && useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
-    && pip install -U pip setuptools wheel \
+    && chown -R airflow:airflow /tmp/airflow
+
+USER airflow
+
+RUN python3 -m venv /home/airflow/venv
+RUN . /home/airflow/venv/bin/activate
+
+ENV PATH=/home/airflow/venv/bin:$PATH
+
+RUN pip install -U pip setuptools wheel \
     && pip install Cython \
     && pip install pytz \
     && pip install pyOpenSSL \
@@ -68,13 +78,22 @@ RUN set -ex \
     && pip install psycopg2 \
     && pip install docutils \
     && pip install docker \
+    && pip install blinker \
     && pip install flask-login==0.4.1 \
-    && pip install mesoshttp \
+    && pip install avmesos \
+    && pip install sentry_sdk \
+    && pip install kubernetes \
     && pip install mesos.interface \
     && pip install celery[redis] \
-    && cd /tmp && git clone ${GIT_REPO} -b ${AIRFLOW_VERSION} && cd airflow && python3 setup.py install \
-    && apt-get purge --auto-remove -yqq $buildDeps \
-    && mkdir -p /usr/local/airflow \
+    && pip install gitpython 
+
+RUN cd /tmp/airflow && python3 setup.py install 
+
+RUN mkdir /home/airflow/airflow
+
+USER root
+
+RUN apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
     && apt-get clean \
     && rm -rf \
@@ -85,14 +104,15 @@ RUN set -ex \
         /usr/share/doc-base
 
 COPY script/entrypoint.sh /entrypoint.sh
-COPY config/airflow.ini ${AIRFLOW_HOME}/airflow.ini
-COPY dags/ ${AIRFLOW_HOME}/dags/
+COPY dags/ ${AIRFLOW_HOME}/airflow/dags/
+
+RUN rm -rf /tmp/airflow
 
 RUN chown -R airflow: ${AIRFLOW_HOME}
 
 EXPOSE 8080 5555 8793
 
-#USER airflow
+USER airflow
 WORKDIR ${AIRFLOW_HOME}
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/bin/bash"] # set default arg for entrypoint
