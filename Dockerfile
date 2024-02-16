@@ -23,12 +23,13 @@ RUN . /airflow/venv/bin/activate
 
 ENV PATH=/airflow/venv/bin:$PATH
 
-RUN pip install 'apache-airflow==2.8.1' --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.8.1/constraints-3.10.txt"
+RUN pip install 'apache-airflow==2.8.2' --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.8.2/constraints-3.10.txt"
 RUN pip install avmesos psycopg2 waitress 
 RUN pip install apache-airflow-providers-docker
 RUN pip install apache-airflow-providers-amazon
 RUN pip install apache-airflow-providers-slack
 RUN pip install avmesos-airflow-provider
+RUN pip install virtualenv
 RUN pip install pandas
 
 RUN mkdir /airflow/airflow
