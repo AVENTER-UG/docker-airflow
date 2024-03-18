@@ -23,7 +23,7 @@ RUN . /airflow/venv/bin/activate
 
 ENV PATH=/airflow/venv/bin:$PATH
 
-RUN pip install 'apache-airflow==2.8.2' --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.8.2/constraints-3.10.txt"
+RUN pip install 'apache-airflow==2.8.3' --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.8.3/constraints-3.10.txt"
 RUN pip install avmesos psycopg2 waitress 
 RUN pip install apache-airflow-providers-docker
 RUN pip install apache-airflow-providers-amazon
@@ -49,6 +49,5 @@ RUN chown -R airflow: ${AIRFLOW_HOME}
 
 EXPOSE 8880 5555 8793
 
-USER airflow
 WORKDIR ${AIRFLOW_HOME}
 CMD ["/airflow/venv/bin/airflow", "webserver"]
