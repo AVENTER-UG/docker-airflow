@@ -1,9 +1,13 @@
-FROM python:3.10.13
-LABEL maintainer="Andreas Peters"
+FROM python:3.12
+LABEL maintainer="Andreas Peters <support@aventer.biz>"
+LABEL org.opencontainers.image.title="docker-airflow"
+LABEL org.opencontainers.image.description="Container image with Airflow Agent and Apache Mesos and ClusterD Support"
+LABEL org.opencontainers.image.vendor="AVENTER UG (haftungsbeschränkt)"
+LABEL org.opencontainers.image.source="https://github.com/AVENTER-UG/"
 
 # Never prompts the user for choices on installation/configuration of packages
-ENV DEBIAN_FRONTEND noninteractive
-ENV TERM linux
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TERM=linux
 
 # Airflow
 ARG AIRFLOW_HOME=/airflow
@@ -15,6 +19,9 @@ ENV LC_CTYPE="C.utf8"
 RUN groupadd -g 992 docker && \
     useradd -ms /bin/bash -G docker -d ${AIRFLOW_HOME} airflow
 
+RUN apt -y update
+RUN apt -y install xmlsec1
+
 
 USER airflow
 
@@ -23,8 +30,8 @@ RUN . /airflow/venv/bin/activate
 
 ENV PATH=/airflow/venv/bin:$PATH
 
-RUN pip install 'apache-airflow==2.8.3' --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.8.3/constraints-3.10.txt"
-RUN pip install avmesos psycopg2 waitress 
+RUN pip install 'apache-airflow==2.10.5' --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.5/constraints-3.12.txt"
+RUN pip install avmesos psycopg2 waitress xmlsec
 RUN pip install apache-airflow-providers-docker
 RUN pip install apache-airflow-providers-amazon
 RUN pip install apache-airflow-providers-slack
@@ -48,6 +55,8 @@ RUN apt-get autoremove -yqq --purge && \
 RUN chown -R airflow: ${AIRFLOW_HOME}
 
 EXPOSE 8880 5555 8793
+
+USER airflow
 
 WORKDIR ${AIRFLOW_HOME}
 CMD ["/airflow/venv/bin/airflow", "webserver"]

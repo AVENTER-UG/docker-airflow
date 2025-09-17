@@ -1,33 +1,36 @@
 #Dockerfile vars
-
 #vars
+TAG=v2.10.5
+UPDATE=
+BRANCH=${TAG}${UPDATE}
 IMAGENAME=docker-airflow
 IMAGEFULLNAME=avhost/${IMAGENAME}
+BUILDDATE=$(shell date -u +%Y%m%d)
 LASTCOMMIT=$(shell git log -1 --pretty=short | tail -n 1 | tr -d " " | tr -d "UPDATE:")
-
-ifeq (${BRANCH}, master) 
-	BRANCH=latest
-endif
-
-ifneq ($(shell echo $(LASTCOMMIT) | grep -E '^v|([0-9]+\.){0,2}(\*|[0-9]+)'),)
-	BRANCH=${LASTCOMMIT}
-else
-	BRANCH=latest
-endif
-
+BRANCHSHORT=$(shell echo ${TAG} | awk -F. '{ print $$1"."$$2 }')
 
 build:
-	@echo ">>>> Build docker image"
-	docker build -t ${IMAGEFULLNAME}:${BRANCH} .
+	@echo ">>>> Build docker image latest"
+	docker build --progress=plain -t ${IMAGEFULLNAME}:latest .
 
 push:
-	@echo ">>>> Publish docker image" ${BRANCH}
-	docker buildx create --use --name buildkitd
-	docker buildx build --platform linux/amd64,linux/arm64 --push -t ${IMAGEFULLNAME}:${BRANCH} .
-	docker buildx build --platform linux/amd64,linux/arm64 --push -t ${IMAGEFULLNAME}:latest .
-	docker buildx rm buildkitd
+	@echo ">>>> Publish docker image" ${BRANCH} ${BRANCHSHORT}
+	-docker buildx create --use --name buildkitd
+	@docker buildx build --sbom=true --provenance=true --platform linux/amd64 --push -t ${IMAGEFULLNAME}:${BRANCH} .
+	@docker buildx build --sbom=true --provenance=true --platform linux/amd64 --push -t ${IMAGEFULLNAME}:${BRANCHSHORT} .
+	@docker buildx build --sbom=true --provenance=true --platform linux/amd64 --push -t ${IMAGEFULLNAME}:latest .
+	-docker buildx rm buildkitd
+
+sboom:
+	syft dir:. > sbom.txt
+	syft dir:. -o json > sbom.json
+
+seccheck:
+	grype --add-cpes-if-none .
 
 imagecheck:
-	trivy image ${IMAGEFULLNAME}:latest
+	grype --add-cpes-if-none ${IMAGEFULLNAME}:latest > cve-report.md
 
-all: build  imagecheck
+
+check: sboom seccheck
+all: check build imagecheck
