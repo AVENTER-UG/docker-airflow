@@ -1,6 +1,6 @@
 #Dockerfile vars
 #vars
-TAG=v2.10.5
+TAG=v3.1.6
 UPDATE=
 BRANCH=${TAG}${UPDATE}
 IMAGENAME=docker-airflow
