@@ -1,6 +1,6 @@
 #Dockerfile vars
 #vars
-TAG=v2.10.5
+TAG=v3.1.7
 UPDATE=
 BRANCH=${TAG}${UPDATE}
 IMAGENAME=docker-airflow
@@ -19,7 +19,6 @@ push:
 	@docker buildx build --sbom=true --provenance=true --platform linux/amd64 --push -t ${IMAGEFULLNAME}:${BRANCH} .
 	@docker buildx build --sbom=true --provenance=true --platform linux/amd64 --push -t ${IMAGEFULLNAME}:${BRANCHSHORT} .
 	@docker buildx build --sbom=true --provenance=true --platform linux/amd64 --push -t ${IMAGEFULLNAME}:latest .
-	-docker buildx rm buildkitd
 
 sboom:
 	syft dir:. > sbom.txt
