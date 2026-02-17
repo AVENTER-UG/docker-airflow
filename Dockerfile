@@ -31,7 +31,7 @@ RUN . /airflow/venv/bin/activate
 
 ENV PATH=/airflow/venv/bin:$PATH
 
-RUN pip install 'apache-airflow==3.1.6' --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.1.6/constraints-3.12.txt"
+RUN pip install 'apache-airflow==3.1.7' --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.1.7/constraints-3.12.txt"
 RUN pip install boto3 avmesos waitress asyncpg xmlsec psycopg2
 RUN pip install apache-airflow-providers-docker
 RUN pip install apache-airflow-providers-amazon
